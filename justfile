@@ -1,51 +1,41 @@
-#!/usr/bin/env -S just --justfile
-
-default:
-    @just --list
-
-# Start all services via docker compose
-start:
-    docker compose up -d
-    @echo "Services started - Open WebUI available at http://localhost:3000"
-
-stop:
-    docker compose down
-
-logs:
-    docker compose logs -f
-
-logs-ollama:
-    docker compose logs -f ollama
-
-# Show just openwebui logs
-logs-webui:
-    docker compose logs -f openwebui
-
-# Check the status of running services
-status:
-    docker compose ps
-    @echo "\nOllama Models:"
-    @docker compose exec -T ollama ollama list 2>/dev/null || echo "Ollama not running"
-
-# Pull a model (usage: just pull-model llama3:8b)
-pull-model MODEL:
-    docker compose exec ollama ollama pull {{MODEL}}
-
-# Reset everything (WARNING: Deletes all data)
-reset:
-    docker compose down -v
-    @echo "All services and volumes have been removed"
-
-# Generate a NixOS configuration file
-generate-nixos-config:
-    @echo "Generating NixOS configuration file..."
-    cp nix/host.nix configuration.nix
-    @echo "Configuration generated: configuration.nix"
-    @echo "To deploy on NixOS: Copy to /etc/nixos/ and run 'sudo nixos-rebuild switch'"
-
-# Install this service on NixOS (requires sudo)
 install-nixos:
-    @echo "Installing on NixOS..."
-    sudo cp nix/host.nix /etc/nixos/ollama-config.nix
-    @echo "import ./ollama-config.nix" | sudo tee -a /etc/nixos/configuration.nix >/dev/null
-    @echo "Configuration installed. Run 'sudo nixos-rebuild switch' to apply."
+    sudo nixos-rebuild switch --flake ./nix#nix-demo
+
+install-packages:
+    sudo nixos-rebuild switch --flake ./nix#nix-demo
+
+install-litellm:
+    echo "⬇️  Pulling litellm Docker image..."
+    docker pull ghcr.io/berriai/litellm:main-stable
+    echo "✅ litellm image pulled"
+
+up:
+    just start-local
+
+down:
+    cd ansible/services && docker compose down
+
+restart: down up
+
+status:
+    cd ansible/services && docker compose ps
+
+test-litellm:
+    curl -s -H "Authorization: Bearer ${LITELLM_MASTER_KEY}" http://localhost:4000/v1/models | jq '.data[].id' || echo "❌ Failed to get models"
+
+# Start only the LiteELM proxy (useful when you installed the image manually)
+start-proxy:
+    echo "🚀 Starting LiteELM (proxy)..."
+    cd ansible/services && docker compose --env-file ../../.env up -d litellm
+    echo "✅ LiteELM started at http://localhost:4000"
+
+start-openwebui:
+    echo "🚀 Starting OpenWebUI..."
+    cd ansible/services && docker compose --env-file ../../.env up -d openwebui
+    echo "✅ OpenWebUI started at http://localhost:3000"
+
+start-local: 
+    just install-litellm
+    just start-proxy
+    just start-openwebui
+    just status
