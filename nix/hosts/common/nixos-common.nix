@@ -38,10 +38,9 @@ in
     settings = {
         experimental-features = [ "nix-command" "flakes" ];
         warn-dirty = false;
-        # 500mb buffer
         download-buffer-size = 500000000;
     };
-    # Automate garbage collection
+
     gc = {
       automatic = true;
       dates = "weekly";

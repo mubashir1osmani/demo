@@ -1,5 +1,5 @@
 {
-  description = "NixOS AI Infrastructure Configuration";
+  description = "private infra";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
@@ -9,8 +9,6 @@
   outputs = { self, nixpkgs, nixpkgs-unstable, ... }@inputs:
     let
       system = "x86_64-linux";
-      
-      # Create overlay for unstable packages
       overlay-unstable = final: prev: {
         unstable = import nixpkgs-unstable {
           inherit system;
@@ -21,7 +19,7 @@
       nixosConfigurations = {
         nix-demo = nixpkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { 
+          specialArgs = {
             inherit inputs;
             unstablePkgs = nixpkgs-unstable.legacyPackages.${system};
           };
