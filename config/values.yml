@@ -7,6 +7,11 @@ model_list:
     litellm_params:
       model: "anthropic/claude-3-opus-20240229"
       api_key: os.environ/ANTHROPIC_API_KEY
+
+  - model_name: "claude-4.5"
+    litellm_params:
+      model: "anthropic/claude-sonnet-4-5-20250929"
+      api_key: os.environ/ANTHROPIC_API_KEY"
     
   - model_name: "gpt-4.1-nano"
     litellm_params:
@@ -15,6 +20,28 @@ model_list:
       api_base: os.environ/AZURE_OPENAI_API_BASE
       api_version: "2024-02-15-preview"
 
+  - model_name: "gpt-5-codex"
+    litellm_params:
+      model: "openai/gpt-5-codex"
+      api_key: os.environ/OPENAI_API_KEY
+  
+  - model_name: gpt-5-mini
+    litellm_params:
+      model: azure/gpt-5-mini
+      api_key: os.environ/AZURE_API_KEY
+      api_base: os.environ/AZURE_API_BASE
+      api_version: '2024-12-01-preview'
+    model_info:
+      input_cost_per_token: 0.000421 # 👈 ONLY to track cost per token
+      output_cost_per_token: 0.000520
+      base_model: gpt-5-nano
+
+
+  - model_name: "gpt-5"
+    litellm_params:
+      model: "azure/gpt-4.1-nano"
+      api_key: os.environ/AZURE_OPENAI_API_KEY
+  
   - model_name: "gemini-2.5-pro"
     litellm_params:
       model: "gemini/gemini-2.5-pro"
@@ -33,3 +60,13 @@ model_list:
       api_key: os.environ/LLAMA_API_KEY
       api_base: os.environ/AZURE_LLAMA_API_BASE
       api_version: "2024-05-01-preview"
+
+  - model_name: nomic-embed
+    litellm_params:
+      model: ollama/nomic-embed-text
+      api_base: http://172.17.0.1:11434
+
+  - model_name: llama3-8b
+    litellm_params:
+      model: ollama/llama3:8b
+      api_base: http://172.17.0.1:11434
