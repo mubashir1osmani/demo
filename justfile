@@ -39,10 +39,7 @@ start-local:
 
 # Database management commands
 start-databases:
-    cd ansible/services && docker compose --env-file ../../.env up -d postgres neo4j
+    cd ansible/services && docker compose --env-file ../../.env up -d neo4j
 
 db-neo4j:
     docker exec -it graph-db cypher-shell -u neo4j -p secret
-
-db-postgres:
-    docker exec -it postgres-db psql -U litellm -d litellm

@@ -1,0 +1,29 @@
+# Caddy configuration for Tailscale and direct access
+# Supports both host-based and path-based routing
+
+# OpenWebUI - main interface
+openwebui.{$TAILSCALE_DOMAIN}.ts.net:80, :3000 {
+    reverse_proxy openwebui:8080
+}
+
+# LiteLLM API
+litellm.{$TAILSCALE_DOMAIN}.ts.net:80, :4000 {
+    reverse_proxy litellm:4000
+}
+
+# Fallback for direct IP access
+:80 {
+    # Path-based routing for direct IP access
+    handle /litellm* {
+        reverse_proxy litellm:4000
+    }
+    
+    handle /api* {
+        reverse_proxy litellm:4000
+    }
+    
+    # Default to OpenWebUI
+    handle {
+        reverse_proxy openwebui:8080
+    }
+}
