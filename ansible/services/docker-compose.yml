@@ -1,4 +1,23 @@
 services:
+  caddy:
+    build:
+      context: ./caddy
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ../../config/Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      - TAILSCALE_API_KEY=${TAILSCALE_API_KEY}
+      - TAILSCALE_DOMAIN=${TAILSCALE_DOMAIN}
+    networks:
+      - nix-demo
+
   litellm:
     image: ghcr.io/berriai/litellm:main-stable
     container_name: litellm
@@ -114,3 +133,5 @@ volumes:
   neo4j_import:
   neo4j_plugins:
   openwebui_data:
+  caddy_data:
+  caddy_config:

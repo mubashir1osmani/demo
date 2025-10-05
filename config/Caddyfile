@@ -1,0 +1,12 @@
+{
+    # ACME DNS-01 challenge with Tailscale
+    acme_dns tailscale {env.TAILSCALE_API_KEY}
+}
+
+openwebui.homelab.{{env.TAILSCALE_DOMAIN}}.ts.net {
+    reverse_proxy openwebui:8080
+}
+
+litellm.homelab.{{env.TAILSCALE_DOMAIN}}.ts.net {
+    reverse_proxy litellm:4000
+}
