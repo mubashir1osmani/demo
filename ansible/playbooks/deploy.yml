@@ -1,0 +1,48 @@
+- name: Deploy application stack
+  hosts: all
+  become: true
+  vars:
+    tailscale_api_key: "{{ lookup('env', 'TAILSCALE_API_KEY') }}"
+    tailscale_domain: "{{ lookup('env', 'TAILSCALE_DOMAIN') }}"
+    litellm_master_key: "{{ lookup('env', 'LITELLM_MASTER_KEY') }}"
+    webui_secret_key: "{{ lookup('env', 'WEBUI_SECRET_KEY') }}"
+  tasks:
+    - name: Create config directory
+      ansible.builtin.file:
+        path: /opt/homelab/config
+        state: directory
+        mode: '0755'
+
+    - name: Copy Caddyfile
+      ansible.builtin.template:
+        src: ../../config/Caddyfile
+        dest: /opt/homelab/config/Caddyfile
+
+    - name: Copy docker-compose.yml
+      ansible.builtin.template:
+        src: ../services/docker-compose.yml
+        dest: /opt/homelab/docker-compose.yml
+
+    - name: Create caddy build directory
+      ansible.builtin.file:
+        path: /opt/homelab/caddy
+        state: directory
+        mode: '0755'
+
+    - name: Copy Caddy Dockerfile
+      ansible.builtin.copy:
+        src: ../services/caddy/Dockerfile
+        dest: /opt/homelab/caddy/Dockerfile
+
+    - name: Create .env file
+      ansible.builtin.template:
+        dest: /opt/homelab/.env
+        src: templates/.env.j2
+
+    - name: Start services
+      community.docker.docker_compose_v2:
+        project_src: /opt/homelab
+        env_files:
+          - /opt/homelab/.env
+        build: always
+        state: present
