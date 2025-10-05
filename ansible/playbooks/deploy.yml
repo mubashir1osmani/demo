@@ -1,0 +1,49 @@
+- name: Deploy application stack
+  hosts: all
+  become: true
+  vars_prompt:
+    - name: tailscale_api_key
+      prompt: "Enter your Tailscale API key"
+      private: true
+    - name: tailscale_domain
+      prompt: "Enter your Tailscale domain (e.g., your-tailnet.ts.net)"
+      private: false
+    - name: litellm_master_key
+      prompt: "Enter a master key for LiteLLM"
+      private: true
+    - name: postgres_password
+      prompt: "Enter a password for the Postgres database"
+      private: true
+      default: "litellm_password"
+    - name: webui_secret_key
+      prompt: "Enter a secret key for OpenWebUI"
+      private: true
+      default: "change_this_secret_key_in_production"
+  tasks:
+    - name: Create config directory
+      ansible.builtin.file:
+        path: /opt/homelab/config
+        state: directory
+        mode: '0755'
+
+    - name: Copy Caddyfile
+      ansible.builtin.template:
+        src: ../../config/Caddyfile
+        dest: /opt/homelab/config/Caddyfile
+
+    - name: Copy docker-compose.yml
+      ansible.builtin.template:
+        src: ../services/docker-compose.yml
+        dest: /opt/homelab/docker-compose.yml
+
+    - name: Create .env file
+      ansible.builtin.template:
+        dest: /opt/homelab/.env
+        src: templates/.env.j2
+
+    - name: Start services
+      community.docker.docker_compose:
+        project_src: /opt/homelab
+        env_file: /opt/homelab/.env
+        build: true
+      changed_when: false
