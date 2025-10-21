@@ -1,0 +1,118 @@
+model_list:
+  - model_name: CLAUDe
+    litellm_params:
+      model: "anthropic/claude-sonnet-4-5-20250929"
+      api_key: os.environ/ANTHROPIC_API_KEY
+     
+  - model_name: CLAUUUUUUUUUUDE
+    litellm_params:
+      model: "anthropic/claude-sonnet-4-20250514"
+      api_key: os.environ/ANTHROPIC_API_KEY
+      tags: ["free"]
+
+  - model_name: whisper
+    litellm_params:
+      model: openai/whisper-1
+      api_key: os.environ/OPENAI_API_KEY
+  
+  - model_name: gpt-4o
+    litellm_params:
+      model: openai/gpt-4o
+      api_key: os.environ/OPENAI_API_KEY
+  
+  - model_name: gpt-5
+    litellm_params:
+      model: openai/gpt-5
+      api_key: os.environ/OPENAI_API_KEY
+  
+  - model_name: gpt-5-pro
+    litellm_params:
+      model: openai/gpt-5-pro
+      api_key: os.environ/OPENAI_API_KEY
+  
+  - model_name: o3 mini deep research
+    litellm_params:
+      model: openai/o3-mini-deep-research
+      api_key: os.environ/OPENAI_API_KEY
+  
+  - model_name: o4 mini deep research
+    litellm_params:
+      model: openai/o4-mini-deep-research
+      api_key: os.environ/OPENAI_API_KEY
+  
+  - model_name: gemini-2.5-pro
+    litellm_params:
+      model: gemini/gemini-2.5-pro
+      api_key: os.environ/GEMINI_API_KEY
+  
+  - model_name: gemini-2.0-flash
+    litellm_params:
+      model: gemini/gemini-2.0-flash
+      api_key: os.environ/GEMINI_API_KEY
+
+  - model_name: gork
+    litellm_params:
+      model: xai/grok-3-mini-beta"
+      api_key: os.environ/XAI_API_KEY
+
+  - model_name: openrouter-nano
+    litellm_params:
+      model: openrouter/openai/gpt-4.1-nano
+      api_key: os.environ/OPENROUTER_API_KEY
+
+  - model_name: 'gpt-4.1-nano'
+    litellm_params:
+      model: 'azure/gpt-4.1-nano'
+      api_base: 'https://ilike-melo96ih-eastus2.openai.azure.com/'
+      api_version: '2025-04-01-preview'
+      api_key: os.environ/AZURE_API_KEY
+      tenant_id: os.environ/MICROSOFT_TENANT
+      client_id: os.environ/MICROSOFT_CLIENT_ID
+      client_secret: os.environ/MICROSOFT_CLIENT_SECRET
+
+    model_info:
+      access_groups: ['all_cornell_models']
+      mode: 'batch'
+      region: "us-east"
+
+  - model_name: 'qwen-3-coder'
+    litellm_params:
+      model: 'together_ai/Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8'
+      api_key: os.environ/TOGETHER_API_KEY
+
+  - model_name: gpt-5-mini
+    litellm_params:
+      model: azure/gpt-5-mini
+      api_key: os.environ/AZURE_API_KEY
+      api_base: 'https://ilike-melo96ih-eastus2.cognitiveservices.azure.com/'
+      api_version: '2024-12-01-preview'
+
+  - model_name: llama3.1
+    litellm_params:
+      model: ollama/llama3.1
+      api_base: http://172.17.0.1:11434
+
+  - model_name: llama3-8b
+    litellm_params:
+      model: ollama/llama3:8b
+      api_base: http://172.17.0.1:11434
+
+  - model_name: codex-mini
+    litellm_params:
+      model: openai/codex-mini
+      api_key: os.environ/OPENAI_API_KEY
+
+  - model_name: gpt-5-codex
+    litellm_params:
+      model: openai/gpt-5-codex
+      api_key: os.environ/OPENAI_API_KEY
+
+  - model_name: deepseek-r1
+    litellm_params:
+      model: ollama/deepseek-r1
+      api_base: http://172.17.0.1:11434
+
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  database_url: os.environ/DATABASE_URL
