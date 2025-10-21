@@ -9,7 +9,7 @@ services:
       - "443:443"
       - "443:443/udp"
     volumes:
-      - ../../config/Caddyfile:/etc/caddy/Caddyfile
+      - ./config/Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data
       - caddy_config:/config
     environment:
@@ -22,9 +22,9 @@ services:
     image: ghcr.io/berriai/litellm:main-stable
     container_name: litellm
     ports:
-      - "127.0.0.1:4000:4000"
+      - "0.0.0.0:4000:4000"
     volumes:
-      - ../../config:/app/config:ro
+      - ./config:/app/config:ro
     environment:
       - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY}
       - DATABASE_URL=${DATABASE_URL:-postgresql://litellm:${POSTGRES_PASSWORD:-litellm_password}@postgres:5432/litellm}
@@ -44,7 +44,7 @@ services:
     image: postgres:16-alpine
     container_name: postgres-db
     ports:
-      - "127.0.0.1:5432:5432"
+      - "0.0.0.0:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
@@ -65,8 +65,8 @@ services:
     image: neo4j:5.16.0-community
     container_name: graph-db
     ports:
-      - "127.0.0.1:7474:7474"  # HTTP
-      - "127.0.0.1:7687:7687"  # Bolt
+      - "0.0.0.0:7474:7474"  # HTTP
+      - "0.0.0.0:7687:7687"  # Bolt
     volumes:
       - neo4j_data:/data
       - neo4j_logs:/logs
@@ -96,7 +96,7 @@ services:
     image: ghcr.io/open-webui/open-webui:main
     container_name: openwebui
     ports:
-      - "127.0.0.1:3000:8080"
+      - "0.0.0.0:3000:8080"
     volumes:
       - openwebui_data:/app/backend/data
     environment:
