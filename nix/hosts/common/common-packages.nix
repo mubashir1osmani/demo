@@ -17,6 +17,7 @@ in
         watch
         wget
         vim
+        openssl
         
         # Database tools
         postgresql
