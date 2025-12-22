@@ -1,4 +1,14 @@
+litellm_settings:
+  store_audit_logs: true
+  callbacks: ["arize_phoenix", "prometheus"]
+  service_callback: ["prometheus"]
+
 model_list:
+  - model_name: claude-sonnet-4-5-20250929
+    litellm_params:
+      model: "anthropic/claude-sonnet-4-5-20250929"
+      api_key: os.environ/ANTHROPIC_API_KEY
+
   - model_name: CLAUDe
     litellm_params:
       model: "anthropic/claude-sonnet-4-5-20250929"
@@ -10,6 +20,34 @@ model_list:
       api_key: os.environ/ANTHROPIC_API_KEY
       tags: ["free"]
 
+  - model_name: bedrock-anthropic
+    litellm_params:
+      model: "bedrock/us.anthropic.claude-3-7-sonnet-20250219-v1:0"
+      aws_access_key_id: os.environ/AWS_ACCESS_KEY_ID
+      aws_secret_access_key: os.environ/AWS_SECRET_ACCESS_KEY
+      aws_region_name: us-east-1
+
+  - model_name: claude-sonnet-4-5
+    litellm_params:
+      model: "bedrock/us.anthropic.claude-sonnet-4-5-20250929-v1:0"
+      aws_access_key_id: os.environ/AWS_ACCESS_KEY_ID
+      aws_secret_access_key: os.environ/AWS_SECRET_ACCESS_KEY
+      aws_region_name: us-east-1
+
+  - model_name: claude-haiku
+    litellm_params:
+      model: "bedrock/us.anthropic.claude-haiku-4-5-20251001-v1:0"
+      aws_access_key_id: os.environ/AWS_ACCESS_KEY_ID
+      aws_secret_access_key: os.environ/AWS_SECRET_ACCESS_KEY
+      aws_region_name: us-east-1
+
+  - model_name: veo
+    litellm_params:
+      model: vertex_ai/veo-3.0-generate-preview
+      vertex_project: os.environ/VERTEX_PROJECT
+      vertex_location: os.environ/VERTEX_LOCATION
+      vertex_credentials: os.environ/VERTEX_CREDENTIALS
+
   - model_name: whisper
     litellm_params:
       model: openai/whisper-1
@@ -19,6 +57,11 @@ model_list:
     litellm_params:
       model: openai/gpt-4o
       api_key: os.environ/OPENAI_API_KEY
+
+  - model_name: gpt-4o
+    litellm_params:
+      model: openai/gpt-4o
+      api_key: os.environ/ANTHROPIC_API_KEY
   
   - model_name: gpt-5
     litellm_params:
@@ -60,16 +103,6 @@ model_list:
       model: openrouter/openai/gpt-4.1-nano
       api_key: os.environ/OPENROUTER_API_KEY
 
-  - model_name: 'gpt-4.1-nano'
-    litellm_params:
-      model: 'azure/gpt-4.1-nano'
-      api_base: 'https://ilike-melo96ih-eastus2.openai.azure.com/'
-      api_version: '2025-04-01-preview'
-      api_key: os.environ/AZURE_API_KEY
-      tenant_id: os.environ/MICROSOFT_TENANT
-      client_id: os.environ/MICROSOFT_CLIENT_ID
-      client_secret: os.environ/MICROSOFT_CLIENT_SECRET
-
     model_info:
       access_groups: ['all_cornell_models']
       mode: 'batch'
@@ -84,8 +117,8 @@ model_list:
     litellm_params:
       model: azure/gpt-5-mini
       api_key: os.environ/AZURE_API_KEY
-      api_base: 'https://ilike-melo96ih-eastus2.cognitiveservices.azure.com/'
-      api_version: '2024-12-01-preview'
+      api_base: os.environ/AZURE_API_BASE
+      api_version: '2025-03-01-preview'
 
   - model_name: llama3.1
     litellm_params:
@@ -112,7 +145,53 @@ model_list:
       model: ollama/deepseek-r1
       api_base: http://172.17.0.1:11434
 
+  - model_name: "claude-knowsmore"
+    litellm_params:
+      model: "anthropic/claude-sonnet-4-5-20250929"
+      api_key: os.environ/ANTHROPIC_API_KEY
+      extra_headers:
+        anthropic-beta: "context-1m-2025-08-07"  # 👈 Enable 1M context
+
+  - model_name: "claude-bed-test"
+    litellm_params:
+      model: "bedrock/us.anthropic.claude-sonnet-4-5-20250929-v1:0"
+      aws_access_key_id: os.environ/AWS_ACCESS_KEY_ID
+      aws_secret_access_key: os.environ/AWS_SECRET_ACCESS_KEY
+      aws_region_name: us-east-2
+      extra_headers:
+        anthropic_beta: "context-1m-2025-08-07"
+
+general_settings:  
+  forward_client_headers_to_llm_api: true
+
+mcp_servers:
+  strands_mcp:
+    transport: "stdio"
+    command: "uvx"
+    args: ["strands-agents-mcp-server"]
+    env: {
+        "FASTMCP_LOG_LEVEL": "INFO"
+    }
+
+search_tools:
+  - search_tool_name: my-search
+    litellm_params:
+      search_provider: exa_ai
+      api_key: os.environ/EXA_API_KEY
+
+guardrails:
+  - guardrail_name: "global-litellm-guardrail"
+    litellm_params:
+      guardrail: "bedrock"
+      mode: "during_call"
+      guardrailIdentifier: "hpxwekfyjt1j"
+      guardrailVersion: "DRAFT"
+      aws_region_name: "us-east-2"
+      disable_exception_on_block: true
 
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY
   database_url: os.environ/DATABASE_URL
+  alerting_threshold: 300
+  proxy_batch_write_at: 60
+  database_connection_pool_limit: 10
