@@ -41,6 +41,9 @@
     kubernetes-helm
     k9s
 
+    # Secrets
+    vault
+
     # Debugging
     dig
     iperf3
