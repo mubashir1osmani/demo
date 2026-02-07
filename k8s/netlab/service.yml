@@ -1,0 +1,27 @@
+# Two services: one for raw TCP experiments, one for TLS
+#
+# WHAT THIS TEACHES:
+# - ClusterIP services create a virtual IP that load-balances across pods
+# - The service DNS name (netlab.ai-lab.svc.cluster.local) resolves to this virtual IP
+# - kube-proxy programs iptables/IPVS rules to redirect traffic to the actual pod IP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: netlab
+  namespace: ai-lab
+  labels:
+    app: netlab
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9000
+      targetPort: 9000
+      protocol: TCP
+      name: tcp
+    - port: 9443
+      targetPort: 9443
+      protocol: TCP
+      name: tls
+  selector:
+    app: netlab

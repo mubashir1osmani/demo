@@ -1,0 +1,88 @@
+# Layer 3: Deploy the TLS echo server to k8s
+#
+# WHAT THIS TEACHES:
+# - How k8s mounts TLS certificates as Secrets
+# - TLS termination patterns:
+#     a) END-TO-END: Client → (TLS) → Nginx → (TLS) → Pod  ← what we do here
+#     b) TERMINATION: Client → (TLS) → Nginx → (plaintext) → Pod  ← more common
+#     c) PASSTHROUGH: Client → (TLS, Nginx doesn't decrypt) → Pod  ← for mTLS
+#
+# We're using pattern (a) to demonstrate that the pod has its own certs.
+# The ingress also terminates TLS, so there are TWO TLS hops (double encryption).
+# In production, you'd typically use pattern (b) for simplicity.
+#
+# SECRET SETUP:
+#   # Generate certs first:
+#   cd core/netlab && chmod +x gen_certs.sh && ./gen_certs.sh
+#
+#   # Create k8s secret from the generated certs:
+#   kubectl create secret tls netlab-tls \
+#     --cert=core/netlab/certs/server.crt \
+#     --key=core/netlab/certs/server.key \
+#     -n ai-lab
+#
+#   # Also store the CA cert (clients need this to verify):
+#   kubectl create secret generic netlab-ca \
+#     --from-file=ca.crt=core/netlab/certs/ca.crt \
+#     -n ai-lab
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netlab
+  namespace: ai-lab
+  labels:
+    app: netlab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: netlab
+  template:
+    metadata:
+      labels:
+        app: netlab
+    spec:
+      containers:
+        - name: netlab
+          image: netlab:latest  # Build locally or push to a registry
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 9000
+              name: tcp
+            - containerPort: 9443
+              name: tls
+          volumeMounts:
+            # Mount the TLS secret as files the server can read
+            # The k8s secret type "tls" gives us tls.crt and tls.key
+            - name: tls-certs
+              mountPath: /app/certs/server.crt
+              subPath: tls.crt
+              readOnly: true
+            - name: tls-certs
+              mountPath: /app/certs/server.key
+              subPath: tls.key
+              readOnly: true
+            - name: ca-cert
+              mountPath: /app/certs/ca.crt
+              subPath: ca.crt
+              readOnly: true
+          readinessProbe:
+            tcpSocket:
+              port: 9443
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+      volumes:
+        - name: tls-certs
+          secret:
+            secretName: netlab-tls
+        - name: ca-cert
+          secret:
+            secretName: netlab-ca

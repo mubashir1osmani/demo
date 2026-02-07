@@ -1,0 +1,44 @@
+# Expose the netlab server via Nginx ingress
+#
+# WHAT THIS TEACHES:
+# - How ingress routes external traffic to internal k8s services
+# - TLS termination at the ingress level
+# - The difference between ingress TLS (edge) and backend TLS (pod)
+#
+# TLS TERMINATION EXPLAINED:
+#   When you visit https://netlab.gpu-lab.tail1234.ts.net:
+#
+#   1. Your browser does a TLS handshake with NGINX (using the ingress cert)
+#   2. Nginx decrypts the request
+#   3. Nginx forwards the request to the netlab pod:
+#      - With backend-protocol HTTPS: re-encrypts with the pod's cert (end-to-end)
+#      - With backend-protocol HTTP: sends plaintext (TLS termination, more common)
+#
+#   We're using HTTPS backend to demonstrate end-to-end encryption.
+#   The annotation nginx.ingress.kubernetes.io/backend-protocol tells nginx
+#   to connect to the backend pod using HTTPS instead of HTTP.
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: netlab
+  namespace: ai-lab
+  labels:
+    app: netlab
+  annotations:
+    # Tell nginx the backend speaks HTTPS (port 9443 on the pod)
+    # Without this, nginx would try HTTP to the backend and get garbage back
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: netlab.gpu-lab.tail1234.ts.net  # Replace tail1234 with your tailnet
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: netlab
+                port:
+                  number: 9443

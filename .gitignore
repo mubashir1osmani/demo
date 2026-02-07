@@ -17,6 +17,9 @@ kubeconfig*
 __pycache__/
 *.pyc
 
+# TLS certs (generated, contain private keys)
+core/netlab/certs/
+
 # Helm
 charts/
 
