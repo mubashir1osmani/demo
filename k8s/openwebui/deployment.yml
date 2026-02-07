@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openwebui
+  namespace: ai-lab
+  labels:
+    app: openwebui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: openwebui
+  template:
+    metadata:
+      labels:
+        app: openwebui
+    spec:
+      containers:
+        - name: openwebui
+          image: ghcr.io/open-webui/open-webui:main
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: OPENAI_API_BASE_URL
+              value: "http://litellm.ai-lab.svc.cluster.local:4000/v1"
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: litellm-secrets
+                  key: master-key
+            - name: ENABLE_OPENAI_API
+              value: "true"
+            - name: ENABLE_OLLAMA_API
+              value: "false"
+            - name: WEBUI_AUTH
+              value: "false"
+            - name: ENABLE_SIGNUP
+              value: "true"
+            - name: DEFAULT_USER_ROLE
+              value: "admin"
+            - name: WEBUI_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openwebui-secrets
+                  key: secret-key
+            # RAG web search via SearXNG
+            - name: ENABLE_RAG_WEB_SEARCH
+              value: "true"
+            - name: RAG_WEB_SEARCH_ENGINE
+              value: "searxng"
+            - name: RAG_WEB_SEARCH_RESULT_COUNT
+              value: "3"
+            - name: RAG_WEB_SEARCH_CONCURRENT_REQUESTS
+              value: "10"
+            - name: SEARXNG_QUERY_URL
+              value: "http://searxng.ai-lab.svc.cluster.local:8080/search?q=<query>"
+          volumeMounts:
+            - name: data
+              mountPath: /app/backend/data
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: openwebui-data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: openwebui-data
+  namespace: ai-lab
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 5Gi

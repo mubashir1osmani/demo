@@ -1,6 +1,27 @@
 .env*
+!.env.example
 .venv/
 venv/
 
 # macOS system files
 .DS_Store
+
+# Nix
+result
+
+# k8s
+kubeconfig*
+*.kubeconfig
+
+# Python
+__pycache__/
+*.pyc
+
+# Helm
+charts/
+
+# Editor
+*.swp
+*.swo
+.idea/
+.vscode/

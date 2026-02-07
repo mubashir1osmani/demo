@@ -1,0 +1,129 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: litellm
+  namespace: ai-lab
+  labels:
+    app: litellm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: litellm
+  template:
+    metadata:
+      labels:
+        app: litellm
+    spec:
+      containers:
+        - name: litellm
+          image: ghcr.io/berriai/litellm:main-stable
+          args:
+            - "--config"
+            - "/app/config.yml"
+            - "--port"
+            - "4000"
+            - "--host"
+            - "0.0.0.0"
+          ports:
+            - containerPort: 4000
+              name: http
+          env:
+            - name: LITELLM_MASTER_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: litellm-secrets
+                  key: master-key
+            - name: DATABASE_URL
+              value: "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@postgres.ai-lab.svc.cluster.local:5432/litellm"
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-creds
+                  key: username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-creds
+                  key: password
+            - name: STORE_MODEL_IN_DB
+              value: "True"
+            # Provider API keys
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: litellm-secrets
+                  key: anthropic-api-key
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: litellm-secrets
+                  key: openai-api-key
+            - name: GEMINI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: litellm-secrets
+                  key: gemini-api-key
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: litellm-secrets
+                  key: aws-access-key-id
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: litellm-secrets
+                  key: aws-secret-access-key
+            - name: AZURE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: litellm-secrets
+                  key: azure-api-key
+            - name: AZURE_API_BASE
+              valueFrom:
+                secretKeyRef:
+                  name: litellm-secrets
+                  key: azure-api-base
+            - name: XAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: litellm-secrets
+                  key: xai-api-key
+            - name: TOGETHER_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: litellm-secrets
+                  key: together-api-key
+            # Observability — self-hosted Phoenix
+            - name: PHOENIX_COLLECTOR_ENDPOINT
+              value: "http://phoenix.ai-lab.svc.cluster.local:4317"
+            - name: PHOENIX_PROJECT_NAME
+              value: "litellm"
+          volumeMounts:
+            - name: config
+              mountPath: /app/config.yml
+              subPath: config.yml
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /health/liveliness
+              port: 4000
+            initialDelaySeconds: 20
+            periodSeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /health/liveliness
+              port: 4000
+            initialDelaySeconds: 40
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+      volumes:
+        - name: config
+          configMap:
+            name: litellm-config

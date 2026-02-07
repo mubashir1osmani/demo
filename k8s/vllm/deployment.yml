@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vllm
+  namespace: ai-lab
+  labels:
+    app: vllm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vllm
+  template:
+    metadata:
+      labels:
+        app: vllm
+    spec:
+      containers:
+        - name: vllm
+          image: vllm/vllm-openai:latest
+          args:
+            - "--model"
+            - "deepseek-ai/DeepSeek-R1"
+            - "--served-model-name"
+            - "deepseek-r1"
+            - "--host"
+            - "0.0.0.0"
+            - "--port"
+            - "8000"
+            - "--max-model-len"
+            - "8192"
+          ports:
+            - containerPort: 8000
+              name: http
+          env:
+            - name: NVIDIA_VISIBLE_DEVICES
+              value: all
+            - name: HUGGING_FACE_HUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: litellm-secrets
+                  key: hf-token
+                  optional: true
+          volumeMounts:
+            - name: vllm-cache
+              mountPath: /root/.cache/huggingface
+          resources:
+            requests:
+              cpu: "2"
+              memory: 8Gi
+              nvidia.com/gpu: "1"
+            limits:
+              cpu: "8"
+              memory: 32Gi
+              nvidia.com/gpu: "1"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 120
+            periodSeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 180
+            periodSeconds: 30
+      volumes:
+        - name: vllm-cache
+          persistentVolumeClaim:
+            claimName: vllm-cache
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: vllm-cache
+  namespace: ai-lab
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 100Gi

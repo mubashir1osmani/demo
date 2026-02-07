@@ -1,0 +1,39 @@
+# Helm values for ingress-nginx
+# Install: helm install ingress-nginx ingress-nginx/ingress-nginx -n ingress-nginx --create-namespace -f nginx-values.yml
+controller:
+  kind: DaemonSet
+
+  # Bind to Tailscale interface only — not exposed to public internet
+  hostNetwork: true
+  dnsPolicy: ClusterFirstWithHostNet
+
+  service:
+    enabled: true
+    type: LoadBalancer
+
+  # Allow ingress controller to run on the single node
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
+
+  ingressClassResource:
+    name: nginx
+    default: true
+
+  # Enable SSL passthrough for Tailscale HTTPS certs
+  extraArgs:
+    enable-ssl-passthrough: ""
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: false # Enable once Prometheus is installed

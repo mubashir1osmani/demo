@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: neo4j
+  namespace: ai-lab
+  labels:
+    app: neo4j
+spec:
+  serviceName: neo4j
+  replicas: 1
+  selector:
+    matchLabels:
+      app: neo4j
+  template:
+    metadata:
+      labels:
+        app: neo4j
+    spec:
+      containers:
+        - name: neo4j
+          image: neo4j:5.16.0-community
+          ports:
+            - containerPort: 7474
+              name: http
+            - containerPort: 7687
+              name: bolt
+          env:
+            - name: NEO4J_AUTH
+              valueFrom:
+                secretKeyRef:
+                  name: neo4j-creds
+                  key: auth
+            - name: NEO4J_dbms_memory_heap_initial__size
+              value: "512M"
+            - name: NEO4J_dbms_memory_heap_max__size
+              value: "1G"
+            - name: NEO4J_dbms_default_listen_address
+              value: "0.0.0.0"
+            - name: NEO4J_PLUGINS
+              value: '["apoc", "graph-data-science"]'
+            - name: NEO4J_dbms_security_procedures_unrestricted
+              value: "apoc.*,gds.*"
+            - name: NEO4J_apoc_export_file_enabled
+              value: "true"
+            - name: NEO4J_apoc_import_file_enabled
+              value: "true"
+          volumeMounts:
+            - name: neo4j-data
+              mountPath: /data
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 7474
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 7474
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: "2"
+              memory: 3Gi
+  volumeClaimTemplates:
+    - metadata:
+        name: neo4j-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 20Gi
