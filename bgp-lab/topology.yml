@@ -1,0 +1,60 @@
+# BGP Clos (Spine-Leaf) Lab
+# Topology: 2 spines + 2 leaves, eBGP on every link (like Meta's datacenter fabric)
+#
+#     spine1 (AS 65100)    spine2 (AS 65200)
+#       |  \                /  |
+#       |   \              /   |
+#       |    \            /    |
+#       |     \          /     |
+#     leaf1 (AS 65001)    leaf2 (AS 65002)
+#    10.1.0.0/24          10.2.0.0/24
+#
+# Key concepts demonstrated:
+#   - eBGP peering on point-to-point /31 links
+#   - ECMP: leaf1 reaches leaf2 via BOTH spines
+#   - AS path based loop prevention
+#   - Prefix advertisement and propagation
+#
+# Usage:
+#   sudo containerlab deploy -t topology.yml
+#   sudo containerlab destroy -t topology.yml
+
+name: bgp-clos
+
+topology:
+  nodes:
+    leaf1:
+      kind: linux
+      image: frrouting/frr:latest
+      binds:
+        - configs/leaf1/daemons:/etc/frr/daemons
+        - configs/leaf1/frr.conf:/etc/frr/frr.conf
+
+    leaf2:
+      kind: linux
+      image: frrouting/frr:latest
+      binds:
+        - configs/leaf2/daemons:/etc/frr/daemons
+        - configs/leaf2/frr.conf:/etc/frr/frr.conf
+
+    spine1:
+      kind: linux
+      image: frrouting/frr:latest
+      binds:
+        - configs/spine1/daemons:/etc/frr/daemons
+        - configs/spine1/frr.conf:/etc/frr/frr.conf
+
+    spine2:
+      kind: linux
+      image: frrouting/frr:latest
+      binds:
+        - configs/spine2/daemons:/etc/frr/daemons
+        - configs/spine2/frr.conf:/etc/frr/frr.conf
+
+  links:
+    # leaf1 <-> spines
+    - endpoints: ["leaf1:eth1", "spine1:eth1"]
+    - endpoints: ["leaf1:eth2", "spine2:eth1"]
+    # leaf2 <-> spines
+    - endpoints: ["leaf2:eth1", "spine1:eth2"]
+    - endpoints: ["leaf2:eth2", "spine2:eth2"]
