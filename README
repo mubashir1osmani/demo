@@ -1,0 +1,120 @@
+AI Lab
+
+A private, self-hosted AI infrastructure running on an AWS EC2 GPU instance (Might switch to homelab soon). NixOS manages the host, k3s runs the services, and Tailscale makes everything accessible only to your private network.
+
+Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  Your Devices (laptop, phone, etc.)                                 │
+│  Connected to Tailscale                                             │
+└──────────────────────────────┬──────────────────────────────────────┘
+                               │
+                          Tailscale tunnel
+                          (WireGuard, encrypted)
+                               │
+┌──────────────────────────────▼──────────────────────────────────────┐
+│  EC2 GPU Instance (NixOS)                                           │
+│                                                                     │
+│  ┌────────────────────────────────────────────────────────────────┐ │
+│  │  Nginx Ingress (hostNetwork, binds to Tailscale IP)           │ │
+│  │  *.gpu-lab.<tailnet>.ts.net                                   │ │
+│  └──────┬────────────┬────────────┬────────────┬─────────────────┘ │
+│         │            │            │            │                    │
+│  ┌──────▼──┐  ┌──────▼──┐  ┌─────▼───┐  ┌────▼────┐              │
+│  │ LiteLLM │  │  Open   │  │ Phoenix │  │ Grafana │  Ingress-    │
+│  │  :4000  │  │ WebUI   │  │  :6006  │  │  :3000  │  exposed     │
+│  │         │  │  :8080  │  │         │  │         │  services    │
+│  └────┬────┘  └────┬────┘  └─────────┘  └────┬────┘              │
+│       │            │                          │                    │
+│       │    ┌───────┘     k3s cluster (ai-lab namespace)           │
+│       │    │                                                       │
+│  ┌────▼────▼──────────────────────────────────────────────────┐   │
+│  │  Internal services (ClusterIP only)                         │   │
+│  │                                                             │   │
+│  │  ┌──────────┐ ┌───────┐ ┌────────┐ ┌───────┐ ┌──────────┐ │   │
+│  │  │ Postgres │ │Ollama │ │ Neo4j  │ │SearXNG│ │Prometheus│ │   │
+│  │  │  :5432   │ │:11434 │ │ :7687  │ │ :8080 │ │  :9090   │ │   │
+│  │  └──────────┘ └───┬───┘ └────────┘ └───────┘ └──────────┘ │   │
+│  │                   │                                         │   │
+│  │               ┌───▼───┐                                     │   │
+│  │               │  GPU  │  NVIDIA A10G / T4                   │   │
+│  │               └───────┘                                     │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+│                                                                     │
+│  NixOS: k3s, Tailscale, NVIDIA drivers (declarative config)        │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+
+Prerequisites
+
+- [Nix](https://nixos.org/download/) with flakes enabled
+- [AWS CLI](https://aws.amazon.com/cli/) configured (`aws configure`)
+- [Ansible](https://docs.ansible.com/) with `community.hashi_vault` collection
+- An EC2 key pair and a subnet with public IP assignment
+- A [Tailscale](https://tailscale.com/) account and auth key
+- A [HashiCorp Vault](https://www.vaultproject.io/) instance with secrets populated
+
+1. Provision the EC2 instance
+
+Creates a GPU instance, wipes Ubuntu, and installs NixOS with k3s + Tailscale:
+
+```bash
+cp .env.example .env
+# Edit .env with your AWS, Tailscale, and Vault credentials
+
+source .env
+./scripts/provision.sh
+```
+
+After the instance reboots, it joins your tailnet automatically. Update `ansible/inventory.ini` with the Tailscale IP.
+
+2. Create k8s secrets from Vault
+
+```bash
+export VAULT_ADDR=https://vault.your-domain.com
+export VAULT_TOKEN=hvs.xxx
+
+ansible-playbook -i ansible/inventory.ini ansible/playbooks/secrets.yml
+```
+
+3. Deploy services
+
+```bash
+ansible-playbook -i ansible/inventory.ini ansible/playbooks/deploy.yml
+```
+
+This deploys PostgreSQL and LiteLLM. Other services (Open WebUI, Ollama, Neo4j, SearXNG, Phoenix, Prometheus) can be enabled by uncommenting them in `ansible/playbooks/deploy.yml`.
+
+4. Verify
+
+```bash
+# On the instance (via Tailscale SSH)
+kubectl get pods -n ai-lab
+tailscale status
+
+# From your laptop (on the tailnet)
+curl http://litellm.gpu-lab.<tailnet>.ts.net:4000/health
+```
+
+Updating the NixOS Configuration
+
+After modifying anything in `nix/`, push the changes to the running instance:
+
+```bash
+ansible-playbook -i ansible/inventory.ini ansible/playbooks/provision.yml
+```
+
+This syncs the flake and runs `nixos-rebuild switch`.
+ 
+Secrets
+
+All secrets are stored in HashiCorp Vault (KV v2) and pulled into k8s by `secrets.yml`:
+
+| Vault Path | k8s Secret | Keys |
+|---|---|---|
+| `secret/ai-lab/litellm` | `litellm-secrets` | master-key, anthropic-api-key, openai-api-key, gemini-api-key, aws-access-key-id, aws-secret-access-key, azure-api-key, azure-api-base, xai-api-key, together-api-key, hf-token |
+| `secret/ai-lab/postgres` | `postgres-creds` | username, password |
+| `secret/ai-lab/neo4j` | `neo4j-creds` | auth |
+| `secret/ai-lab/openwebui` | `openwebui-secrets` | secret-key |
