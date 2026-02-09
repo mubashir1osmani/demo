@@ -14,8 +14,7 @@
       trustedInterfaces = [ "tailscale0" ];
     };
 
-    # Use Tailscale MagicDNS
     nameservers = [ "100.100.100.100" ];
-    search = [ "tail1234.ts.net" ]; # Replace with your actual tailnet domain
+    search = [ "tail1234.ts.net" ];
   };
 }

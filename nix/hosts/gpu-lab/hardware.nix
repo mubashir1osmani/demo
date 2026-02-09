@@ -1,5 +1,7 @@
 # GPU / NVIDIA driver configuration
 # Enables NVIDIA drivers, CUDA, and container runtime GPU passthrough
+# Disk partitioning is handled by disko (disk-config.nix)
+
 { config, pkgs, lib, ... }:
 
 {
@@ -13,24 +15,20 @@
   # Enable OpenGL for GPU compute
   hardware.graphics.enable = true;
 
-  # NVIDIA Container Toolkit — lets k3s pods use the GPU
+  # nvidia container toolkit — lets k3s pods use the GPU
   hardware.nvidia-container-toolkit.enable = true;
 
-  # Boot config
+  # Boot — UEFI via GRUB (EC2 GPU instances support UEFI)
   boot = {
     loader.grub = {
       enable = true;
-      device = "/dev/vda"; # Digital Ocean typically uses virtio
+      efiSupport = true;
+      efiInstallAsRemovable = true; # EC2 doesn't expose real EFI vars
+      device = "nodev";
     };
     initrd.availableKernelModules = [
-      "virtio_pci" "virtio_scsi" "ahci" "sd_mod"
+      "nvme" "xen_blkfront" "ena"
     ];
     kernelModules = [ "nvidia" "nvidia_uvm" "nvidia_modeset" ];
-  };
-
-  # Filesystem — adjust to match the actual droplet disk layout
-  fileSystems."/" = {
-    device = "/dev/vda1";
-    fsType = "ext4";
   };
 }

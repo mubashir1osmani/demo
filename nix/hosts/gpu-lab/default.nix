@@ -4,6 +4,7 @@
 
 {
   imports = [
+    ./disk-config.nix
     ./hardware.nix
     ./k3s.nix
     ./tailscale.nix

@@ -38,12 +38,12 @@
       changed_when: "'has been added' in helm_add.stdout"
       failed_when: false
 
-    - name: Add prometheus-community Helm repo
-      ansible.builtin.command:
-        cmd: helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-      register: helm_add_prom
-      changed_when: "'has been added' in helm_add_prom.stdout"
-      failed_when: false
+    # - name: Add prometheus-community Helm repo
+    #   ansible.builtin.command:
+    #     cmd: helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+    #   register: helm_add_prom
+    #   changed_when: "'has been added' in helm_add_prom.stdout"
+    #   failed_when: false
 
     - name: Update Helm repos
       ansible.builtin.command:
@@ -88,37 +88,37 @@
       ansible.builtin.command:
         cmd: kubectl apply -f {{ k8s_dir }}/litellm/
 
-    - name: Deploy Open WebUI
-      ansible.builtin.command:
-        cmd: kubectl apply -f {{ k8s_dir }}/openwebui/
+    # - name: Deploy Open WebUI
+    #   ansible.builtin.command:
+    #     cmd: kubectl apply -f {{ k8s_dir }}/openwebui/
 
-    - name: Deploy Ollama
-      ansible.builtin.command:
-        cmd: kubectl apply -f {{ k8s_dir }}/ollama/
+    # - name: Deploy Ollama
+    #   ansible.builtin.command:
+    #     cmd: kubectl apply -f {{ k8s_dir }}/ollama/
 
-    - name: Deploy vLLM
-      ansible.builtin.command:
-        cmd: kubectl apply -f {{ k8s_dir }}/vllm/
+    # - name: Deploy vLLM
+    #   ansible.builtin.command:
+    #     cmd: kubectl apply -f {{ k8s_dir }}/vllm/
 
-    - name: Deploy Neo4j
-      ansible.builtin.command:
-        cmd: kubectl apply -f {{ k8s_dir }}/neo4j/
+    # - name: Deploy Neo4j
+    #   ansible.builtin.command:
+    #     cmd: kubectl apply -f {{ k8s_dir }}/neo4j/
 
-    - name: Deploy SearXNG
-      ansible.builtin.command:
-        cmd: kubectl apply -f {{ k8s_dir }}/searxng/
+    # - name: Deploy SearXNG
+    #   ansible.builtin.command:
+    #     cmd: kubectl apply -f {{ k8s_dir }}/searxng/
 
-    - name: Deploy Phoenix (observability)
-      ansible.builtin.command:
-        cmd: kubectl apply -f {{ k8s_dir }}/monitoring/phoenix.yml
+    # - name: Deploy Phoenix (observability)
+    #   ansible.builtin.command:
+    #     cmd: kubectl apply -f {{ k8s_dir }}/monitoring/phoenix.yml
 
-    # --- Prometheus stack ---
-    - name: Install/upgrade Prometheus stack
-      ansible.builtin.command:
-        cmd: >
-          helm upgrade --install prometheus prometheus-community/kube-prometheus-stack
-          --namespace monitoring --create-namespace
-          -f {{ k8s_dir }}/monitoring/prometheus-values.yml
+    # # --- Prometheus stack ---
+    # - name: Install/upgrade Prometheus stack
+    #   ansible.builtin.command:
+    #     cmd: >
+    #       helm upgrade --install prometheus prometheus-community/kube-prometheus-stack
+    #       --namespace monitoring --create-namespace
+    #       -f {{ k8s_dir }}/monitoring/prometheus-values.yml
 
     # --- Verify ---
     - name: Wait for pods to be ready

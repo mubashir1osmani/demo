@@ -1,5 +1,3 @@
-# Tailscale configuration
-# Provides private networking — all services are only accessible via the tailnet
 { config, pkgs, lib, ... }:
 
 {
